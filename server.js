@@ -1,0 +1,55 @@
+const express = require('express');
+const { MongoClient } = require('mongodb');
+const path = require('path');
+const cors = require('cors');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// Logger middleware: prints every request to the server console
+app.use((req, res, next) => {
+    console.log(new Date().toISOString() + ' - ' + req.method + ' ' + req.url);
+    next();
+});
+
+// Connection string for MongoDB Atlas
+const client = new MongoClient("mongodb+srv://mosesebenezer218_db_user:uAQ7BmXQ6lp5z81d@cluster0.0yj0zlt.mongodb.net/");
+let db;
+
+async function connectTOMongoDB() {
+    try {
+        await client.connect();
+        db = client.db('afterschool');
+        console.log('Connected to MongoDB');
+
+
+    } catch (error) {
+        console.dir(error);
+    }
+}
+
+connectTOMongoDB();
+
+// Static file middleware: serves lesson images from the "images" folder
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// If the image file was not found above, send an error message instead
+app.use('/images', (req, res) => {
+    res.status(404).json({ error: 'Image not found' });
+});
+
+// GET /lessons - returns all the lessons as JSON
+app.get('/lessons', async (req, res) => {
+    try {
+        const lessons = await db.collection('lesson').find({}).toArray();
+        res.json(lessons);
+    } catch (error) {
+        res.status(500).json({ error: 'Could not get lessons' });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log('Server running on port ' + PORT);
+});
