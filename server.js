@@ -23,8 +23,6 @@ async function connectTOMongoDB() {
         await client.connect();
         db = client.db('afterschool');
         console.log('Connected to MongoDB');
-
-
     } catch (error) {
         console.dir(error);
     }
@@ -47,6 +45,23 @@ app.get('/lessons', async (req, res) => {
         res.json(lessons);
     } catch (error) {
         res.status(500).json({ error: 'Could not get lessons' });
+    }
+});
+
+// POST /orders - saves a new order to the "order" collection
+app.post('/orders', async (req, res) => {
+    try {
+        const order = {
+            name: req.body.name,
+            phone: req.body.phone,
+            lessonIDs: req.body.lessonIDs,
+            spaces: req.body.spaces
+        };
+
+        const result = await db.collection('order').insertOne(order);
+        res.status(201).json({ message: 'Order saved', orderId: result.insertedId });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not save order' });
     }
 });
 
