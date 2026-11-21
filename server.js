@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const path = require('path');
 const cors = require('cors');
 const app = express();
@@ -62,6 +62,27 @@ app.post('/orders', async (req, res) => {
         res.status(201).json({ message: 'Order saved', orderId: result.insertedId });
     } catch (error) {
         res.status(500).json({ error: 'Could not save order' });
+    }
+});
+
+// PUT /lessons/:id - updates any attribute(s) of one lesson (e.g. space, price)
+app.put('/lessons/:id', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid lesson id' });
+        }
+
+        const result = await db.collection('lesson').updateOne(
+            { _id: new ObjectId(req.params.id) },   // which lesson to change
+            { $set: req.body }                      // the new values sent in the body
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Lesson not found' });
+        }
+        res.json({ message: 'Lesson updated' });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not update lesson' });
     }
 });
 
